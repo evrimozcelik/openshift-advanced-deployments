@@ -1,0 +1,57 @@
+kind: BuildConfig
+apiVersion: v1
+metadata:
+  name: dotnet-jenkins-build
+spec:
+  source:
+    git:
+      uri: "https://github.ibm.com/cai-turkey/cloudy.net.git"
+    sourceSecret:
+      name: "ibm-github-key3"
+  strategy:
+    type: JenkinsPipeline
+    jenkinsPipelineStrategy:
+      jenkinsfile: |-
+        pipeline {
+
+          environment {
+            appName="${APP_NAME}"
+            project="${APP_PROJECT}" 
+            project_build="${APP_PROJECT}" // original: ${APP_PROJECT}-build
+            is_canary="TRUE"
+          }
+
+          agent {
+            label 'maven'
+          }
+         
+          stages {
+            stage("Print Params") {
+              steps {
+                sh "echo Hellooo"
+              }
+            }
+
+            stage("Clone sources") {
+              steps {
+                sh "git clone https://9557d386608424f4961c645a3a8f0f74aa980023@github.ibm.com/cai-turkey/cloudy.net.git"
+              }
+            }
+
+            stage("SonarQube analysis") {
+              steps {
+                withSonarQubeEnv(credentialsId: 'f225455e-ea59-40fa-8af7-08176e86507a', installationName: 'My SonarQube Server') {
+                  sh 'mvn clean package sonar:sonar'
+                }
+              }
+            }
+
+            stage("Quality Gate") {
+            steps {
+              timeout(time: 1, unit: 'HOURS') {
+                waitForQualityGate abortPipeline: true
+              }
+            }
+          }
+
+        }

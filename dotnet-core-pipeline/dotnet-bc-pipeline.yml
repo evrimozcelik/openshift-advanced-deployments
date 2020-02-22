@@ -1,0 +1,107 @@
+kind: BuildConfig
+apiVersion: v1
+metadata:
+  name: dotnet-bc-pipeline
+spec:
+  source:
+    contextDir: Cloudy
+    git:
+      uri: 'https://github.ibm.com/EVRIM/cloudy.net'
+    sourceSecret:
+      name: ibm-github-key3
+    type: Git
+  strategy:
+    type: JenkinsPipeline
+    jenkinsPipelineStrategy:
+      jenkinsfile: |-
+        pipeline {
+
+          environment {
+            app_name="cloudy-sample-api2"
+            project="evrim-tr" 
+            project_build="evrim-tr" // original: ${APP_PROJECT}-build
+            is_canary="TRUE"
+            solution_folder_path="." // cloudy.net/Cloudy
+            project_folder_path="." // cloudy.net/Cloudy/Src/Sample/Cloudy.Sample.Api
+            sonar_project="test" // cloudy
+          }
+
+          agent {
+            label 'dotnet-31'
+          }
+          
+          stages {
+            stage("Print Params") {
+              steps {
+                sh "echo Hellooo"
+                sh "dotnet tool install --global dotnet-sonarscanner"                
+              }
+            }
+
+            stage("Clone source") {
+              steps {
+                //sh "git clone https://9557d386608424f4961c645a3a8f0f74aa980023@github.ibm.com/cai-turkey/cloudy.net.git"
+                sh "git clone https://github.com/Cingulara/peopleapi-jenkins-auto-deploy.git ."
+              }
+            }
+
+            stage("Move traffic to Main?") {
+              steps {
+                script {
+                    def userInput = input(
+                        id: 'userInput', message: 'Let\'s map all traffic to main app and delete canary?', parameters: [
+                        [$class: 'TextParameterDefinition', defaultValue: 'yes', description: 'Proceed?', name: 'value']
+                    ])
+                }
+              }
+            }
+
+            stage('Build source') {
+              steps {
+                dir("${solution_folder_path}") {
+                  sh "dotnet build"
+                }
+              }
+            }
+
+            stage('Run Unit tests') {
+              steps {
+                dir("${solution_folder_path}") {
+                  sh "find . -name *.csproj -exec dotnet test {} \\;"
+                }
+              }
+            }
+
+            stage('Scan Codebase') {
+              steps {
+                dir("${solution_folder_path}") {
+                  withSonarQubeEnv('SonarQube-Server') {
+                    timeout(time: 1, unit: 'HOURS') {
+                      sh "dotnet sonarscanner begin /k:${sonar_project} /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_AUTH_TOKEN"
+                      sh "dotnet build"
+                      sh "dotnet sonarscanner end /d:sonar.login=$SONAR_AUTH_TOKEN"
+                    }
+                  }
+                }
+              }
+            }
+
+            stage('Deploy application') {
+              steps {
+                dir("${project_folder_path}") {
+                  script {
+                    openshift.withCluster() {
+                      openshift.withProject("${project_build}") {
+                        sh "dotnet publish -c Release"
+                        //openshift.startBuild("${app_name}", "--from-dir=bin/Release/netcoreapp3.1/publish", "--follow")
+                        openshift.startBuild("${app_name}", "--from-dir=bin/Release/netcoreapp2.1/publish", "--follow")
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+          }
+
+        }

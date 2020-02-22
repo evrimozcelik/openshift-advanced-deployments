@@ -1,0 +1,25 @@
+kind: BuildConfig
+apiVersion: v1
+metadata:
+  name: dotnetapp-build
+spec:
+  strategy:
+    type: JenkinsPipeline
+    jenkinsPipelineStrategy:
+      jenkinsfile: |-
+        node("dotnet-30") {
+          stage('clone sources') {
+            sh "git clone https://github.com/redhat-developer/s2i-dotnetcore-ex --branch dotnetcore-3.0 ."
+          }
+          stage('publish') {
+            dir('app') {
+              sh "dotnet publish -c Release"
+            }
+          }
+          stage('create image') {
+            dir('app') {
+              sh 'oc new-build --name=dotnetapp dotnet:3.0 --binary=true || true'
+              sh 'oc start-build dotnetapp --from-dir=bin/Release/netcoreapp3.0/publish --follow'
+            }
+          }
+        }

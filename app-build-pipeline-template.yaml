@@ -1,0 +1,108 @@
+# Modified from original source https://github.com/kgshukla/canary-rel-openshift
+apiVersion: v1
+kind: Template
+metadata:
+  name: app-main-build-pipeline
+parameters:
+- name: APP_NAME
+  description: Name of the application
+  displayName: Application Name
+  required: true
+  value: backend-main
+- name: APP_PROJECT
+  description: Project or Namespace where application would be deployed
+  displayName: Project Name
+  required: true
+  value: backend-main
+- name: GIT_SOURCE_URL
+  description: The source URL for the application
+  displayName: Source URL
+  required: true
+  value: https://github.com/kgshukla/canary-rel-openshift.git
+- name: GIT_SOURCE_REF
+  description: The source Ref for the application
+  displayName: Source Ref
+  required: true
+  value: master
+- name: GIT_CONTEXT_PATH
+  description: Module within git project
+  displayName: Context path
+  required: true
+  value: backend-main
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      pipeline.alpha.openshift.io/uses: '[{"name": "${APP_NAME}", "namespace": "", "kind": "DeploymentConfig"}]'
+    creationTimestamp: null
+    labels:
+      app: ${APP_NAME}-build-jenkins
+    name: ${APP_NAME}-build-jenkins
+  spec:
+    strategy:
+      jenkinsPipelineStrategy:
+        jenkinsfile: |-
+            pipeline {
+              environment {
+                appName="${APP_NAME}"
+                project="${APP_PROJECT}" 
+                project_build="${APP_PROJECT}" // original: ${APP_PROJECT}-build
+              }
+              
+              agent {
+                label 'maven'
+              }
+              
+              stages {
+                stage("Print Params") {
+                  steps {
+                    sh "echo APP_PROJECT - ${project} "
+                    sh "echo APP_NAME - ${APP_NAME} "
+                    sh "echo GIT_SOURCE_URL - ${GIT_SOURCE_URL}"
+                    sh "echo GIT_CONTEXT_PATH - ${GIT_CONTEXT_PATH}"
+                    sh "echo GIT_SOURCE_REF - ${GIT_SOURCE_REF}"
+                    sh "echo project build name - ${project_build}"
+                  }
+                }
+
+                 stage("Create BuildConfig") {
+                  when {
+                    expression {
+                      openshift.withCluster() {
+                        openshift.withProject("${project_build}") {
+                          return !openshift.selector("bc", "${APP_NAME}").exists();
+                        }
+                      }
+                    }
+                  }
+
+                  // First time deployment
+                  steps {
+                    script {
+                      openshift.withCluster() {
+                        openshift.withProject("${project_build}") {
+                          openshift.newBuild("dotnet:3.1~${GIT_SOURCE_URL}", "--name=${APP_NAME}", "--context-dir=Cloudy", "-e DOTNET_STARTUP_PROJECT='Src/Sample/Cloudy.Sample.Api/Cloudy.Sample.Api.csproj'", "--source-secret='ibm-github-key3'")
+                          sh "oc label bc/${APP_NAME} app=${APP_NAME} -n ${project_build} --overwrite"
+                          sh "oc label is/${APP_NAME} app=${APP_NAME} -n ${project_build} --overwrite"
+                        }
+                      }
+                    }
+                  }
+                }
+
+                stage("Build Image") {
+                  steps {
+                    script {
+                      openshift.withCluster() {
+                        openshift.withProject("${project_build}") {
+                            openshift.startBuild("${APP_NAME}", "--wait=true")
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+    type: JenkinsPipeline
+
