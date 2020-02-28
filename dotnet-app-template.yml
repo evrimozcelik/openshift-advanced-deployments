@@ -30,6 +30,13 @@ objects:
         ref: master
         uri: https://github.com/evrimozcelik/openshift-advanced-deployments
       type: Git
+    triggers:
+      - github:
+          secret: eluXP4a90KolLtGOp202
+        type: GitHub
+      - generic:
+          secret: RVNVn79gonNB_nHYZ9l8
+        type: Generic
     strategy:
       type: JenkinsPipeline
       jenkinsPipelineStrategy:
