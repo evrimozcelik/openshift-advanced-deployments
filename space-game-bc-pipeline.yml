@@ -1,0 +1,88 @@
+kind: BuildConfig
+apiVersion: v1
+metadata:
+  name: space-game-bc-pipeline
+spec:
+  source:
+    contextDir: SpaceGame
+    git:
+      uri: "https://github.com/evrimozcelik/openshift-advanced-deployments"
+      ref: "master"
+    type: Git
+  strategy:
+    type: JenkinsPipeline
+    jenkinsPipelineStrategy:
+      jenkinsfile: |-
+        pipeline {
+
+          environment {
+            app_name="space-game"
+            project="evrim-tr" 
+            project_build="evrim-tr" // original: ${APP_PROJECT}-build
+            is_canary="TRUE"
+            solution_folder_path="SpaceGame" 
+            project_folder_path="SpaceGame/src/SpaceGame" 
+            sonar_project="SpaceGame" 
+          }
+
+          agent {
+            label 'dotnet-31'
+          }
+          
+          stages {
+
+            stage("Clone source") {
+              steps {
+                sh "git clone https://github.com/evrimozcelik/openshift-advanced-deployments ."
+              }
+            }
+
+            stage('Build source') {
+              steps {
+                dir("${solution_folder_path}") {
+                  sh "dotnet build"
+                }
+              }
+            }
+
+            stage('Run Unit tests') {
+              steps {
+                dir("${solution_folder_path}") {
+                  sh "find . -name *.csproj -exec dotnet test {} \\;"
+                }
+              }
+            }
+
+            stage('Scan Codebase') {
+              steps {
+                dir("${solution_folder_path}") {
+                  withSonarQubeEnv('SonarQube-Server') {
+                    timeout(time: 1, unit: 'HOURS') {
+                      sh "dotnet tool install --global dotnet-sonarscanner"                
+                      sh "dotnet sonarscanner begin /k:${sonar_project} /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_AUTH_TOKEN"
+                      sh "dotnet build"
+                      sh "dotnet sonarscanner end /d:sonar.login=$SONAR_AUTH_TOKEN"
+                    }
+                  }
+                }
+              }
+            }
+
+            stage('Deploy application') {
+              steps {
+                dir("${project_folder_path}") {
+                  script {
+                    openshift.withCluster() {
+                      openshift.withProject("${project_build}") {
+                        sh "dotnet publish -c Release"
+                        openshift.startBuild("${app_name}", "--from-dir=bin/Release/netcoreapp3.1/publish", "--follow")
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+          }
+
+        }

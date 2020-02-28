@@ -1,0 +1,232 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  annotations:
+    description: "Dotnet App Template with Jenkins Pipeline"
+    iconClass: "icon-dotnet"
+    tags: "dotnet,core"
+  name: dotnet-app-template
+labels:
+  createdBy: "dotnet-app-template"
+objects:
+# BuildConfig pipeline
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    name: space-game-pipeline
+    labels:
+      app: space-game
+  spec:
+    completionDeadlineSeconds: 3600
+    source:
+      contextDir: SpaceGame
+      git:
+        ref: master
+        uri: https://github.com/evrimozcelik/openshift-advanced-deployments
+      type: Git
+    strategy:
+      type: JenkinsPipeline
+      jenkinsPipelineStrategy:
+        jenkinsfile: |-
+            pipeline {
+    
+              environment {
+                app_name="space-game"
+                project="evrim-tr" 
+                project_build="evrim-tr" // original: ${APP_PROJECT}-build
+                is_canary="TRUE"
+                solution_folder_path="SpaceGame" 
+                project_folder_path="SpaceGame/src/SpaceGame" 
+                sonar_project="SpaceGame" 
+              }
+    
+              agent {
+                label 'dotnet-31'
+              }
+              
+              stages {
+    
+                stage("Clone source") {
+                  steps {
+                    sh "git clone https://github.com/evrimozcelik/openshift-advanced-deployments ."
+                  }
+                }
+    
+                stage('Build source') {
+                  steps {
+                    dir("${solution_folder_path}") {
+                      sh "dotnet build"
+                    }
+                  }
+                }
+    
+                stage('Run Unit tests') {
+                  steps {
+                    dir("${solution_folder_path}") {
+                      sh "find . -name *.csproj -exec dotnet test {} \\;"
+                    }
+                  }
+                }
+    
+                stage('Scan Codebase') {
+                  steps {
+                    dir("${solution_folder_path}") {
+                      withSonarQubeEnv('SonarQube-Server') {
+                        timeout(time: 1, unit: 'HOURS') {
+                          sh "dotnet tool install --global dotnet-sonarscanner"                
+                          sh "dotnet sonarscanner begin /k:${sonar_project} /d:sonar.host.url=$SONAR_HOST_URL /d:sonar.login=$SONAR_AUTH_TOKEN"
+                          sh "dotnet build"
+                          sh "dotnet sonarscanner end /d:sonar.login=$SONAR_AUTH_TOKEN"
+                        }
+                      }
+                    }
+                  }
+                }
+    
+                stage('Deploy application') {
+                  steps {
+                    dir("${project_folder_path}") {
+                      script {
+                        openshift.withCluster() {
+                          openshift.withProject("${project_build}") {
+                            sh "dotnet publish -c Release"
+                            openshift.startBuild("${app_name}", "--from-dir=bin/Release/netcoreapp3.1/publish", "--follow")
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+    
+              }
+    
+            }
+# ImageStream
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    labels:
+      build: space-game
+      app: space-game
+    name: space-game
+# BuildConfig binary dotnet
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      build: space-game
+      app: space-game
+    name: space-game
+  spec:
+    completionDeadlineSeconds: 3600
+    output:
+      to:
+        kind: ImageStreamTag
+        name: space-game:latest
+    source:
+      binary: {}
+      type: Binary
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: dotnet:3.1
+          namespace: evrim-tr
+      type: Source
+    triggers:
+    - github:
+        secret: eluXP4a90KolLtGOp202
+      type: GitHub
+    - generic:
+        secret: RVNVn79gonNB_nHYZ9l8
+      type: Generic
+# Deployment Config
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    generation: 2
+    labels:
+      app: space-game
+    name: space-game
+  spec:
+    replicas: 1
+    selector:
+      app: space-game
+      deploymentconfig: space-game
+    strategy:
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: space-game
+          deploymentconfig: space-game
+      spec:
+        containers:
+        - image: space-game:latest
+          imagePullPolicy: Always
+          name: space-game
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - type: ConfigChange
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - space-game
+        from:
+          kind: ImageStreamTag
+          name: space-game:latest
+# Service
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: space-game
+    name: space-game
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: space-game
+      deploymentconfig: space-game
+    sessionAffinity: None
+    type: ClusterIP
+#Route2
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    annotations:
+      openshift.io/host.generated: "true"
+    labels:
+      app: space-game
+    name: space-game
+  spec:
+    host: space-game-evrim-tr.osc-sbx-exp-ap-15768375-f72ef11f3ab089a8c677044eb28292cd-0001.us-east.containers.appdomain.cloud
+    port:
+      targetPort: 8080-tcp
+    tls:
+      termination: edge
+    to:
+      kind: Service
+      name: space-game
+      weight: 100
+    wildcardPolicy: None
