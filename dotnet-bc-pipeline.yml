@@ -6,7 +6,8 @@ spec:
   source:
     contextDir: Cloudy
     git:
-      uri: 'https://github.ibm.com/EVRIM/cloudy.net'
+      uri: "https://github.ibm.com/EVRIM/cloudy.net"
+      ref: "master"
     sourceSecret:
       name: ibm-github-key3
     type: Git
@@ -21,9 +22,9 @@ spec:
             project="evrim-tr" 
             project_build="evrim-tr" // original: ${APP_PROJECT}-build
             is_canary="TRUE"
-            solution_folder_path="." // cloudy.net/Cloudy
-            project_folder_path="." // cloudy.net/Cloudy/Src/Sample/Cloudy.Sample.Api
-            sonar_project="test" // cloudy
+            solution_folder_path="cloudy.net/Cloudy" 
+            project_folder_path="cloudy.net/Cloudy/Src/Sample/Cloudy.Sample.Api" 
+            sonar_project="cloudy" 
           }
 
           agent {
@@ -40,8 +41,7 @@ spec:
 
             stage("Clone source") {
               steps {
-                //sh "git clone https://9557d386608424f4961c645a3a8f0f74aa980023@github.ibm.com/cai-turkey/cloudy.net.git"
-                sh "git clone https://github.com/Cingulara/peopleapi-jenkins-auto-deploy.git ."
+                sh "git clone https://9557d386608424f4961c645a3a8f0f74aa980023@github.ibm.com/cai-turkey/cloudy.net.git"
               }
             }
 
@@ -93,8 +93,7 @@ spec:
                     openshift.withCluster() {
                       openshift.withProject("${project_build}") {
                         sh "dotnet publish -c Release"
-                        //openshift.startBuild("${app_name}", "--from-dir=bin/Release/netcoreapp3.1/publish", "--follow")
-                        openshift.startBuild("${app_name}", "--from-dir=bin/Release/netcoreapp2.1/publish", "--follow")
+                        openshift.startBuild("${app_name}", "--from-dir=bin/Release/netcoreapp3.1/publish", "--follow")
                       }
                     }
                   }
