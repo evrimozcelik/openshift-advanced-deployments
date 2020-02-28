@@ -8,14 +8,20 @@ metadata:
   name: dotnet-app-template
 labels:
   createdBy: "dotnet-app-template"
+parameters:
+  - name: APP_NAME
+    description: Name of the application
+    displayName: APP_NAME
+    required: true
+    value: space-game
 objects:
 # BuildConfig pipeline
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata:
-    name: space-game-pipeline
+    name: ${APP_NAME}-pipeline
     labels:
-      app: space-game
+      app: ${APP_NAME}
   spec:
     completionDeadlineSeconds: 3600
     source:
@@ -31,7 +37,7 @@ objects:
             pipeline {
     
               environment {
-                app_name="space-game"
+                app_name="${APP_NAME}"
                 project="evrim-tr" 
                 project_build="evrim-tr" // original: ${APP_PROJECT}-build
                 is_canary="TRUE"
@@ -106,23 +112,23 @@ objects:
   kind: ImageStream
   metadata:
     labels:
-      build: space-game
-      app: space-game
-    name: space-game
+      build: ${APP_NAME}
+      app: ${APP_NAME}
+    name: ${APP_NAME}
 # BuildConfig binary dotnet
 - apiVersion: build.openshift.io/v1
   kind: BuildConfig
   metadata:
     labels:
-      build: space-game
-      app: space-game
-    name: space-game
+      build: ${APP_NAME}
+      app: ${APP_NAME}
+    name: ${APP_NAME}
   spec:
     completionDeadlineSeconds: 3600
     output:
       to:
         kind: ImageStreamTag
-        name: space-game:latest
+        name: ${APP_NAME}:latest
     source:
       binary: {}
       type: Binary
@@ -146,13 +152,13 @@ objects:
   metadata:
     generation: 2
     labels:
-      app: space-game
-    name: space-game
+      app: ${APP_NAME}
+    name: ${APP_NAME}
   spec:
     replicas: 1
     selector:
-      app: space-game
-      deploymentconfig: space-game
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
     strategy:
       rollingParams:
         intervalSeconds: 1
@@ -164,13 +170,13 @@ objects:
     template:
       metadata:
         labels:
-          app: space-game
-          deploymentconfig: space-game
+          app: ${APP_NAME}
+          deploymentconfig: ${APP_NAME}
       spec:
         containers:
-        - image: space-game:latest
+        - image: ${APP_NAME}:latest
           imagePullPolicy: Always
-          name: space-game
+          name: ${APP_NAME}
           ports:
           - containerPort: 8080
             protocol: TCP
@@ -188,17 +194,17 @@ objects:
       imageChangeParams:
         automatic: true
         containerNames:
-        - space-game
+        - ${APP_NAME}
         from:
           kind: ImageStreamTag
-          name: space-game:latest
+          name: ${APP_NAME}:latest
 # Service
 - apiVersion: v1
   kind: Service
   metadata:
     labels:
-      app: space-game
-    name: space-game
+      app: ${APP_NAME}
+    name: ${APP_NAME}
   spec:
     ports:
     - name: 8080-tcp
@@ -206,8 +212,8 @@ objects:
       protocol: TCP
       targetPort: 8080
     selector:
-      app: space-game
-      deploymentconfig: space-game
+      app: ${APP_NAME}
+      deploymentconfig: ${APP_NAME}
     sessionAffinity: None
     type: ClusterIP
 #Route2
@@ -217,16 +223,16 @@ objects:
     annotations:
       openshift.io/host.generated: "true"
     labels:
-      app: space-game
-    name: space-game
+      app: ${APP_NAME}
+    name: ${APP_NAME}
   spec:
-    host: space-game-evrim-tr.osc-sbx-exp-ap-15768375-f72ef11f3ab089a8c677044eb28292cd-0001.us-east.containers.appdomain.cloud
+    host: ${APP_NAME}-evrim-tr.osc-sbx-exp-ap-15768375-f72ef11f3ab089a8c677044eb28292cd-0001.us-east.containers.appdomain.cloud
     port:
       targetPort: 8080-tcp
     tls:
       termination: edge
     to:
       kind: Service
-      name: space-game
+      name: ${APP_NAME}
       weight: 100
     wildcardPolicy: None
