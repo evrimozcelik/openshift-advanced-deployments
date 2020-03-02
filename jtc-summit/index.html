@@ -1,0 +1,128 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Classic Slides with impress.js | Simple example impress.js slide show | by Henrik Ingo @henrikingo</title>
+    
+    <meta name="description" content="OpenShift Demo" />
+    <meta name="author" content="Evrim Özçelik" />
+
+    <link rel="stylesheet" href="css/github.css">
+
+    <link rel="stylesheet" href="css/classic-slides.css"  />
+
+    <link rel="stylesheet" href="css/custom.css"  />
+    
+</head>
+
+<body class="impress-not-supported">
+
+    <div class="fallback-message">
+        <p>Your browser <b>doesn't support the features required</b> by impress.js, so you are presented with a simplified version of this presentation.</p>
+        <p>For the best experience please use the latest <b>Chrome</b>, <b>Safari</b> or <b>Firefox</b> browser.</p>
+    </div>
+
+    <div id="impress" data-transition-duration="1000" data-autoplay="7">
+
+        <div class="step slide title" data-x="-1000" data-y="-1500">
+            <h1>Welcome to the Journey to Cloud Summit</h1>
+            <h2>Evrim Özçelik</h2>
+            <h3>2020, March</h3>
+        </div>
+
+        <div id="toc" class="step slide" data-rel-x="1000" data-rel-y="0">
+            <h1>Table of Contents</h1>
+            <ul>
+                <li><a href="#demo-flow">Canary Release with OpenShift Demo Flow</a></li>
+                <li><a href="#openshift">Red Hat OpenShift</a></li>
+                <li><a href="#ibm-arch">IBM Architectures</a></li>
+            </ul>
+        </div>
+
+        <div id="demo-flow" class="step slide" data-rel-x="1000" data-rel-y="0">
+            <span>Canary Release with OpenShift Demo Flow</span>
+            <img src="drawings/openshift-canary-release-demo.png" alt="Canary Release Demo" style="width: 100%;"/>
+        </div>
+
+        <div id="openshift" class="step slide" data-rel-x="1100" data-rel-y="300" data-rotate="30">
+            <span>OpenShift Overview</span>
+            <img src="images/openshift-overview.png" alt="OpenShift Overview" style="height: 80%; width: unset;"/>
+        </div>
+
+        <div class="step slide" data-rel-x="800" data-rel-y="800" data-rotate="60">
+            <span>OpenShift Architecture</span>
+            <img src="images/openshift-architecture.png" alt="OpenShift Architecture" style="width: 100%"/>
+        </div>
+
+        <div id="ibm-arch" class="step slide" data-rel-x="300" data-rel-y="1100" data-rotate="90">
+            <span>IBM Cloud Architectural Model</span>
+            <img src="images/ibm-cloud-architectural-models.png" alt="IBM Cloud Architectural Model" style="width: 100%"/>
+        </div>
+
+        <div class="step slide" data-rel-x="-300" data-rel-y="1100" data-rotate="120">
+            <img src="images/ibm-microservices-ref-arch.png" alt="IBM Microservices Reference Architecture" style="height: 80%; width: unset;"/>
+            <a style="font-size: 20px;" href="https://www.ibm.com/cloud/garage/architectures/microservices/reference-architecture">https://www.ibm.com/cloud/garage/architectures/microservices/reference-architecture</a>
+        </div>
+
+        <div class="step slide" data-rel-x="-800" data-rel-y="800" data-rotate="150">
+            <span>IBM Microservices with OpenShift</span>
+            <img src="images/ibm-microservices-with-openshift.png" alt="IBM Microservices with OpenShift" style="width: 100%"/>
+        </div>
+
+        <div id="moreinfo" class="step slide" data-rel-x="-1100" data-rel-y="300" data-rotate="720" data-transition-duration="2000">
+            <h1>More info</h1>
+            <ul>
+            <li><a href="https://github.com/impress/impress.js/blob/master/DOCUMENTATION.md">DOCUMENTATION.md</a> is the API reference.
+            </li>
+            <li><a href="https://github.com/impress/impress.js/blob/master/examples/classic-slides/index.html">Source of this presentation itself</a> is commented</li>
+            <li><a href="http://impress.github.io/impress.js/">Advanced Impress.js demo</a> by <a href="http://twitter.com/bartaz">@bartaz</a>
+                <ul>
+                <li>Again, the <a href="http://github.com/impress/impress.js/blob/master/index.html">html</a> 
+                    and <a href="https://github.com/impress/impress.js/blob/master/css/impress-demo.css">css</a> source is well commented.</li>
+                </ul>
+            </li>
+            <li>More examples and demos:
+                <ul>
+                <li><a href="https://github.com/impress/impress.js/tree/master/examples">examples/</a> in this repository</li>
+                <li><a href="https://github.com/impress/impress.js/wiki/Examples-and-demos">on the impress.js wiki</a></li>
+                </ul>
+            </li>
+            <li>Check out <a href="https://github.com/impress/impressionist">Impressionist</a>: a 3D GUI to create impress.js presentations</li>
+            </ul>
+
+            <div class="notes">
+            </div>
+        </div>
+
+        <!-- This last, empty "slide" is set to be very large using the data-scale attribute, 
+            so that it covers all the other slides you just saw. 
+            It's a common way of zooming out at the end, to show the whole presentation.
+            In CSS, we set pointer-events:none to make this slide non-clickable. 
+            It makes a difference at least for SVG content, such as the mermaid diagram. -->
+        <div id="overview" class="step" data-x="3000" data-y="1500" data-scale="10" style="pointer-events: none;">
+        </div>
+    </div>
+
+    <!--
+        Add navigation-ui controls: back, forward and a select list.
+        Add a progress indicator bar (current step / all steps)
+        Add the help popup plugin
+    -->
+    <div id="impress-toolbar"></div>
+
+    <div class="impress-progressbar"><div></div></div>
+    <div class="impress-progress"></div>
+
+    <div id="impress-help"></div>
+
+    <!-- Extra modules
+        Load highlight.js, mermaid.js, markdown.js and MathJax.js from extras.
+        If you're curious about details, these are initialized in src/plugins/extras/extras.js -->
+    <script type="text/javascript" src="js/highlight.pack.js"></script>
+
+    <script type="text/javascript" src="js/impress.js"></script>
+    <script>impress().init();</script>
+
+</body>
+</html>

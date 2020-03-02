@@ -1,1 +1,0 @@
-[![Build Status](https://dev.azure.com/ibmjtc/IbmJtc/_apis/build/status/IbmJtc/IbmJtc%20CI?branchName=master)](https://dev.azure.com/ibmjtc/IbmJtc/_build/latest?definitionId=1&branchName=master)

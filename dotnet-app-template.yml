@@ -121,7 +121,7 @@ objects:
                     script {
                       openshift.withCluster() {
                         openshift.withProject("${project_build}") {
-                          sh "oc set route-backends ${app_name} ${app_name}=75 ${app_name}-canary=25"
+                          sh "oc set route-backends ${app_name} ${app_name}=50 ${app_name}-canary=50"
                         }
                       }
                     }
@@ -272,6 +272,7 @@ objects:
   metadata:
     annotations:
       openshift.io/host.generated: "true"
+      haproxy.router.openshift.io/balance: "roundrobin"
     labels:
       app: ${APP_NAME}
     name: ${APP_NAME}
