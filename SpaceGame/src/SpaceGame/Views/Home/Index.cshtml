@@ -2,16 +2,32 @@
 @{
     ViewData["Title"] = "Home Page - Space Game";
 }
-<section class="intro" style="background-color: red; opacity: 0.6;">
+<header class="header">
+    <div class="header-left">
+        <a href="#"> <img class="logo" src="/images/logo.png"/> </a>    
+    </div>
+    <nav></nav>
+    <div class="header-right">
+        <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 30 72" viewBox="0 0 20 20" width="25" height="25"><path fill="white" d="M15.5 15.5H18V18h-2.5zm-6.75 0h2.5V18h-2.5zM2 15.5h2.5V18H2zm13.5-6.75H18v2.5h-2.5zm-6.75 0h2.5v2.5h-2.5zM2 8.75h2.5v2.5H2zM15.5 2H18v2.5h-2.5zM8.75 2h2.5v2.5h-2.5zM2 2h2.5v2.5H2z"></path></svg>
+    </div>
+</header>
+
+<section style="background: rgb(0,98,255);background: linear-gradient(90deg, rgba(0,98,255,1) 50%, rgba(1,19,49,1) 85%, rgba(1,6,15,1) 100%);">
+    <div class="intro">
     <div class="container">
         <img class="title" src="/images/space-game-title.svg" alt="Space Game">
-        <p>An example site for demo</p>
+        <p>IBM JTC’20 örnek uygulama demosu</p>
+         <a href="" class="btn btn-default btn-lg" data-toggle="modal" data-target="#pretend-modal">OYUNU İNDİR</a>
+    </div>
     </div>
 </section>
+
 <section class="download">
     <div class="image-cap"></div>
-    <div class="container">
-        <a href="" class="btn btn-default btn-lg" data-toggle="modal" data-target="#pretend-modal">Download game</a>
+    <div class="container background-black">
+        <img class="cloud-logo" src="/images/ibm-cloud-logo.png" />
+        <p class="notice">IBM JTC Series ‘20</p>   
+        <span>MOVE Services</span>
     </div>
 </section>
 
@@ -122,16 +138,6 @@
                     <div class="row nav-buttons">
                         <h4>Mode</h4>
                         <ul>
-                            @if (string.IsNullOrEmpty(Model.SelectedMode))
-                            {
-                                <li class="filter-active">All</li>
-                            }
-                            else
-                            {
-                                <li class="filter-button">
-                                    <a class="" href="/?region=@Model.SelectedRegion#leaderboard">All</a>
-                                </li>
-                            }
                             @{
                                 foreach (var mode in Model.GameModes)
                                 {
@@ -182,7 +188,7 @@
     </div>
 </section>
 
-
+<footer class="footer">Copyright 2020 © IBM Global Business Services®</footer>
 
 <!-- Modals -->
 <div class="modal fade" id="test-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
