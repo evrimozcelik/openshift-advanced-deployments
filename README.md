@@ -1,3 +1,1 @@
-# openshift-advanced-deployments
-
-oc new-app -f dotnet-app-template.yml -p APP_NAME=space-game
+[![Build Status](https://dev.azure.com/ibmjtc/IbmJtc/_apis/build/status/IbmJtc/IbmJtc%20CI?branchName=master)](https://dev.azure.com/ibmjtc/IbmJtc/_build/latest?definitionId=1&branchName=master)
