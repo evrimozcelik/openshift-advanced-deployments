@@ -13,4 +13,4 @@ CI/CD flow is depicted in the following diagram.
 
 This flow was presented in an IBM Event in 2020. 
 
-Here is the [web based presentation](./jtc-summit/index.html) prepared with impress.js. 
+Here is the [web based presentation](https://evrimozcelik.github.io/openshift-advanced-deployments/jtc-summit/index.html) prepared with impress.js. 
